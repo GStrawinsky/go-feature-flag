@@ -225,7 +225,7 @@ func (f *InternalFlag) applyScheduledRolloutSteps(evaluationDate time.Time) (*In
 			(steps.Date.Before(evaluationDate) || steps.Date.Equal(evaluationDate)) {
 			switch steps.GetStrategy() {
 			case ScheduledStrategyReset:
-				flagCopy = f.applyScheduledStepReset(steps)
+				f.applyScheduledStepReset(flagCopy, steps)
 			case ScheduledStrategyMerge:
 				f.applyScheduledStepMerge(flagCopy, steps)
 			}
@@ -235,20 +235,17 @@ func (f *InternalFlag) applyScheduledRolloutSteps(evaluationDate time.Time) (*In
 }
 
 // applyScheduledStepReset resets the flag configuration and applies only the scheduled step configuration.
-func (f *InternalFlag) applyScheduledStepReset(steps ScheduledStep) *InternalFlag {
-	newFlag := &InternalFlag{
-		Variations:      steps.Variations,
-		Rules:           steps.Rules,
-		BucketingKey:    steps.BucketingKey,
-		DefaultRule:     steps.DefaultRule,
-		Experimentation: steps.Experimentation,
-		Scheduled:       f.Scheduled, // Keep the scheduled steps for future evaluations
-		TrackEvents:     steps.TrackEvents,
-		Disable:         steps.Disable,
-		Version:         steps.Version,
-		Metadata:        steps.Metadata,
-	}
-	return newFlag
+func (f *InternalFlag) applyScheduledStepReset(flagCopy *InternalFlag, steps ScheduledStep) {
+	flagCopy.Variations = steps.Variations
+	flagCopy.Rules = steps.Rules
+	flagCopy.BucketingKey = steps.BucketingKey
+	flagCopy.DefaultRule = steps.DefaultRule
+	flagCopy.Experimentation = steps.Experimentation
+	flagCopy.Scheduled = f.Scheduled // Keep the scheduled steps for future evaluations
+	flagCopy.TrackEvents = steps.TrackEvents
+	flagCopy.Disable = steps.Disable
+	flagCopy.Version = steps.Version
+	flagCopy.Metadata = steps.Metadata
 }
 
 // applyScheduledStepMerge merges the scheduled step configuration with the current flag configuration.

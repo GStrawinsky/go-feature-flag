@@ -25,9 +25,11 @@ func main() {
 			Path: "examples/rollout_scheduled/flags.goff.yaml",
 		},
 	})
+	// Check init errors.
 	if err != nil {
 		log.Fatal(err)
 	}
+	// defer closing ffclient
 	defer ffclient.Close()
 
 	// create users
