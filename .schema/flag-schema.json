@@ -223,6 +223,13 @@
                 "date": {
                     "type": "string",
                     "format": "date-time"
+                },
+                "strategy": {
+                    "type": "string",
+                    "enum": ["merge", "reset"],
+                    "default": "merge",
+                    "title": "strategy",
+                    "description": "Strategy to apply when the scheduled step is triggered. 'merge' (default) merges the step configuration with the current flag. 'reset' wipes the flag configuration and applies only the step configuration."
                 }
             },
             "additionalProperties": false,
