@@ -25,11 +25,9 @@ func main() {
 			Path: "examples/rollout_scheduled/flags.goff.yaml",
 		},
 	})
-	// Check init errors.
 	if err != nil {
 		log.Fatal(err)
 	}
-	// defer closing ffclient
 	defer ffclient.Close()
 
 	// create users
@@ -40,6 +38,16 @@ func main() {
 	// Call multiple time the same flag to see the change in time.
 	for true {
 		time.Sleep(1 * time.Second)
-		fmt.Println(ffclient.BoolVariation("new-admin-access", user, false))
+		newAdminAccess, err := ffclient.BoolVariationDetails("new-admin-access", user, false)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("new-admin-access:", newAdminAccess.Value, newAdminAccess.Reason)
+
+		newAdminAccessReset, err := ffclient.BoolVariationDetails("new-admin-access-reset", user, false)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("new-admin-access-reset:", newAdminAccessReset.Value, newAdminAccessReset.Reason)
 	}
 }
