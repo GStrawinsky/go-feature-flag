@@ -224,8 +224,8 @@ func (f *InternalFlag) applyScheduledRolloutSteps(evaluationDate time.Time) (*In
 		if steps.Date != nil &&
 			(steps.Date.Before(evaluationDate) || steps.Date.Equal(evaluationDate)) {
 			switch steps.GetStrategy() {
-			case ScheduledStrategyReset:
-				f.applyScheduledStepReset(flagCopy, steps)
+			case ScheduledStrategyOverride:
+				f.applyScheduledStepOverride(flagCopy, steps)
 			case ScheduledStrategyMerge:
 				f.applyScheduledStepMerge(flagCopy, steps)
 			}
@@ -234,8 +234,8 @@ func (f *InternalFlag) applyScheduledRolloutSteps(evaluationDate time.Time) (*In
 	return flagCopy, nil
 }
 
-// applyScheduledStepReset resets the flag configuration and applies only the scheduled step configuration.
-func (f *InternalFlag) applyScheduledStepReset(flagCopy *InternalFlag, steps ScheduledStep) {
+// applyScheduledStepOverride overrides the flag configuration with the scheduled step configuration.
+func (f *InternalFlag) applyScheduledStepOverride(flagCopy *InternalFlag, steps ScheduledStep) {
 	flagCopy.Variations = steps.Variations
 	flagCopy.Rules = steps.Rules
 	flagCopy.BucketingKey = steps.BucketingKey

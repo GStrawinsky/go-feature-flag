@@ -1489,7 +1489,7 @@ func TestInternalFlag_Value(t *testing.T) {
 				},
 				Scheduled: &[]flag.ScheduledStep{
 					{
-						Strategy: flag.ScheduledStrategyReset,
+						Strategy: flag.ScheduledStrategyOverride,
 						Date:     testconvert.Time(time.Now().Add(-1 * time.Second)),
 						InternalFlag: flag.InternalFlag{
 							Variations: &map[string]*any{
@@ -1633,7 +1633,7 @@ func TestInternalFlag_Value(t *testing.T) {
 				},
 				Scheduled: &[]flag.ScheduledStep{
 					{
-						Strategy: flag.ScheduledStrategyReset,
+						Strategy: flag.ScheduledStrategyOverride,
 						Date:     testconvert.Time(time.Now().Add(-1 * time.Hour)),
 						InternalFlag: flag.InternalFlag{
 							Variations: &map[string]*any{
@@ -1675,7 +1675,7 @@ func TestInternalFlag_Value(t *testing.T) {
 				},
 				Scheduled: &[]flag.ScheduledStep{
 					{
-						Strategy: flag.ScheduledStrategyReset,
+						Strategy: flag.ScheduledStrategyOverride,
 						Date:     testconvert.Time(time.Now().Add(-3 * time.Hour)),
 						InternalFlag: flag.InternalFlag{
 							Variations: &map[string]*any{

@@ -12,8 +12,8 @@ const (
 	// This is the default behavior.
 	ScheduledStrategyMerge ScheduledStrategy = "merge"
 
-	// ScheduledStrategyReset resets the flag configuration and applies only the scheduled step configuration.
-	ScheduledStrategyReset ScheduledStrategy = "reset"
+	// ScheduledStrategyOverride resets the flag configuration and applies only the scheduled step configuration.
+	ScheduledStrategyOverride ScheduledStrategy = "override"
 )
 
 // ScheduledStep is one change of the flag.
@@ -23,8 +23,6 @@ type ScheduledStep struct {
 	Strategy     ScheduledStrategy `yaml:"strategy,omitempty" json:"strategy,omitempty" toml:"strategy,omitempty"`
 }
 
-// GetStrategy returns the strategy for this scheduled step.
-// If no strategy is set, it returns the default strategy (merge).
 func (s *ScheduledStep) GetStrategy() ScheduledStrategy {
 	if s.Strategy == "" {
 		return ScheduledStrategyMerge
