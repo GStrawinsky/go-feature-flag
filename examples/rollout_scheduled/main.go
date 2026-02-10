@@ -46,6 +46,12 @@ func main() {
 		}
 		fmt.Println("new-admin-access:", newAdminAccess.Value, newAdminAccess.Reason)
 
+		newAdminAccessOverride, err := ffclient.BoolVariationDetails("new-admin-access-override", user, false)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("new-admin-access-override:", newAdminAccessOverride.Value, newAdminAccessOverride.Reason)
+
 		newAdminAccessReset, err := ffclient.BoolVariationDetails("new-admin-access-reset", user, false)
 		if err != nil {
 			log.Fatal(err)

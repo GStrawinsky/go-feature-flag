@@ -20,6 +20,30 @@ new-admin-access:
         - name: rule_1
           query: beta eq "false"
       date: 2022-05-12T15:36:00.1+02:00
+
+new-admin-access-override:
+  variations:
+    default: false
+    false_var: false
+    true_var: true
+  targeting:
+    - query: key eq "785a14bf-d2c5-4caa-9c70-2bbc4e3732a5"
+      name: rule_1
+      percentage:
+        false_var: 0
+        true_var: 100
+  defaultRule:
+    variation: default
+  scheduledRollout:
+    - strategy: override
+      targeting:
+        - name: rule_2
+          query: key eq "785a14bf-d2c5-4caa-9c70-2bbc4e3732a5"
+          percentage:
+            false_var: 100
+            true_var: 0
+      date: 2022-05-12T15:36:00.1+02:00
+
 new-admin-access-reset:
   variations:
     default: false
@@ -34,17 +58,12 @@ new-admin-access-reset:
   defaultRule:
     variation: default
   scheduledRollout:
-    - strategy: reset
-      variations:
-        default: false
-        false_var: false
-        true_var: true
-      defaultRule:
-        variation: default
-      targeting:
-        - name: rule_2
+    - targeting:
+        - name: rule_1
           query: key eq "785a14bf-d2c5-4caa-9c70-2bbc4e3732a5"
           percentage:
-            false_var: 100
-            true_var: 0
+            false_var: 0
+            true_var: 100
       date: 2022-05-12T15:36:00.1+02:00
+    - date: 2022-06-12T15:36:00.1+02:00
+      strategy: reset
