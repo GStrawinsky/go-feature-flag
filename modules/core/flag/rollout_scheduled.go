@@ -12,8 +12,11 @@ const (
 	// This is the default behavior.
 	ScheduledStrategyMerge ScheduledStrategy = "merge"
 
-	// ScheduledStrategyOverride resets the flag configuration and applies only the scheduled step configuration.
+	// ScheduledStrategyOverride overrides the provided fields with the scheduled step configuration.
 	ScheduledStrategyOverride ScheduledStrategy = "override"
+
+	// ScheduledStrategyReset resets the flag configuration to its initial state.
+	ScheduledStrategyReset ScheduledStrategy = "reset"
 )
 
 // ScheduledStep is one change of the flag.

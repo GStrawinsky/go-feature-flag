@@ -226,6 +226,8 @@ func (f *InternalFlag) applyScheduledRolloutSteps(evaluationDate time.Time) (*In
 			switch steps.GetStrategy() {
 			case ScheduledStrategyOverride:
 				f.applyScheduledStepOverride(flagCopy, steps)
+			case ScheduledStrategyReset:
+				f.applyScheduledStepReset(flagCopy)
 			case ScheduledStrategyMerge:
 				f.applyScheduledStepMerge(flagCopy, steps)
 			}
@@ -236,16 +238,38 @@ func (f *InternalFlag) applyScheduledRolloutSteps(evaluationDate time.Time) (*In
 
 // applyScheduledStepOverride overrides the flag configuration with the scheduled step configuration.
 func (f *InternalFlag) applyScheduledStepOverride(flagCopy *InternalFlag, steps ScheduledStep) {
-	flagCopy.Variations = steps.Variations
-	flagCopy.Rules = steps.Rules
-	flagCopy.BucketingKey = steps.BucketingKey
-	flagCopy.DefaultRule = steps.DefaultRule
-	flagCopy.Experimentation = steps.Experimentation
-	flagCopy.Scheduled = f.Scheduled // Keep the scheduled steps for future evaluations
-	flagCopy.TrackEvents = steps.TrackEvents
-	flagCopy.Disable = steps.Disable
-	flagCopy.Version = steps.Version
-	flagCopy.Metadata = steps.Metadata
+	flagCopy.Variations = coalesce(steps.Variations, flagCopy.Variations)
+	flagCopy.Rules = coalesce(steps.Rules, flagCopy.Rules)
+	flagCopy.BucketingKey = coalesce(steps.BucketingKey, flagCopy.BucketingKey)
+	flagCopy.DefaultRule = coalesce(steps.DefaultRule, flagCopy.DefaultRule)
+	flagCopy.Experimentation = coalesce(steps.Experimentation, flagCopy.Experimentation)
+	flagCopy.Scheduled = f.Scheduled // Always keep scheduled steps
+	flagCopy.TrackEvents = coalesce(steps.TrackEvents, flagCopy.TrackEvents)
+	flagCopy.Disable = coalesce(steps.Disable, flagCopy.Disable)
+	flagCopy.Version = coalesce(steps.Version, flagCopy.Version)
+	flagCopy.Metadata = coalesce(steps.Metadata, flagCopy.Metadata)
+}
+
+// coalesce returns override if non-nil, otherwise fallback.
+func coalesce[T any](override, fallback *T) *T {
+	if override != nil {
+		return override
+	}
+	return fallback
+}
+
+// applyScheduledStepReset resets the flag configuration to its initial state.
+func (f *InternalFlag) applyScheduledStepReset(flagCopy *InternalFlag) {
+	flagCopy.Variations = f.Variations
+	flagCopy.Rules = f.Rules
+	flagCopy.BucketingKey = nil
+	flagCopy.DefaultRule = f.DefaultRule
+	flagCopy.Experimentation = f.Experimentation
+	flagCopy.Scheduled = f.Scheduled
+	flagCopy.TrackEvents = f.TrackEvents
+	flagCopy.Disable = f.Disable
+	flagCopy.Version = f.Version
+	flagCopy.Metadata = f.Metadata
 }
 
 // applyScheduledStepMerge merges the scheduled step configuration with the current flag configuration.

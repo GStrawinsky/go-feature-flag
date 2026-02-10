@@ -1467,7 +1467,7 @@ func TestInternalFlag_Value(t *testing.T) {
 			},
 		},
 		{
-			name: "Should reset flag config when strategy is reset",
+			name: "Should override flag config when strategy is override",
 			flag: flag.InternalFlag{
 				Variations: &map[string]*any{
 					"variation_A": testconvert.Interface("value_A"),
@@ -1496,6 +1496,7 @@ func TestInternalFlag_Value(t *testing.T) {
 								"variation_C": testconvert.Interface("value_C"),
 								"variation_D": testconvert.Interface("value_D"),
 							},
+							Rules: &[]flag.Rule{},
 							DefaultRule: &flag.Rule{
 								VariationResult: testconvert.String("variation_C"),
 							},
@@ -1611,7 +1612,7 @@ func TestInternalFlag_Value(t *testing.T) {
 			},
 		},
 		{
-			name: "Should wipe rules when strategy is reset and no rules in step",
+			name: "Should keep original rules when strategy is override and no rules in step",
 			flag: flag.InternalFlag{
 				Variations: &map[string]*any{
 					"variation_A": testconvert.Interface("value_A"),
@@ -1639,9 +1640,7 @@ func TestInternalFlag_Value(t *testing.T) {
 							Variations: &map[string]*any{
 								"variation_A": testconvert.Interface("value_A"),
 								"variation_B": testconvert.Interface("value_B"),
-							},
-							DefaultRule: &flag.Rule{
-								VariationResult: testconvert.String("variation_A"),
+								"variation_C": testconvert.Interface("value_C"),
 							},
 						},
 					},
@@ -1654,10 +1653,17 @@ func TestInternalFlag_Value(t *testing.T) {
 					DefaultSdkValue: "value_default",
 				},
 			},
-			want: "value_A",
+			want: "value_B",
 			want1: flag.ResolutionDetails{
-				Variant: "variation_A",
-				Reason:  flag.ReasonStatic,
+				Variant:   "variation_B",
+				Reason:    flag.ReasonTargetingMatch,
+				RuleIndex: testconvert.Int(0),
+				RuleName:  testconvert.String("rule1"),
+				Metadata: map[string]any{
+					"description":       "this is a flag",
+					"issue-link":        "https://issue.link/GOFF-1",
+					"evaluatedRuleName": "rule1",
+				},
 			},
 		},
 		{
