@@ -2327,6 +2327,164 @@ func TestInternalFlag_Value(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "Should ignore all the step fields and restore initial state when strategy is reset",
+			flag: flag.InternalFlag{
+				Variations: &map[string]*any{
+					"variation_A": testconvert.Interface("value_A"),
+					"variation_B": testconvert.Interface("value_B"),
+				},
+				DefaultRule: &flag.Rule{
+					VariationResult: testconvert.String("variation_A"),
+				},
+				Metadata: &map[string]any{
+					"description": "this is a flag",
+					"issue-link":  "https://issue.link/GOFF-1",
+				},
+				Scheduled: &[]flag.ScheduledStep{
+					{
+						Strategy: flag.ScheduledStrategyReset,
+						Date:     testconvert.Time(time.Now().Add(-1 * time.Hour)),
+						InternalFlag: flag.InternalFlag{
+							DefaultRule: &flag.Rule{
+								VariationResult: testconvert.String("variation_B"),
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				flagName: "my-flag",
+				user:     ffcontext.NewEvaluationContextBuilder("user-key").Build(),
+				flagContext: flag.Context{
+					DefaultSdkValue: "value_default",
+				},
+			},
+			want: "value_A",
+			want1: flag.ResolutionDetails{
+				Variant: "variation_A",
+				Reason:  flag.ReasonStatic,
+				Metadata: map[string]any{
+					"description": "this is a flag",
+					"issue-link":  "https://issue.link/GOFF-1",
+				},
+			},
+		},
+		{
+			name: "Should revert to initial state when any other strategy is followed by reset",
+			flag: flag.InternalFlag{
+				Variations: &map[string]*any{
+					"variation_A": testconvert.Interface("value_A"),
+					"variation_B": testconvert.Interface("value_B"),
+				},
+				DefaultRule: &flag.Rule{
+					VariationResult: testconvert.String("variation_A"),
+				},
+				Metadata: &map[string]any{
+					"description": "this is a flag",
+					"issue-link":  "https://issue.link/GOFF-1",
+				},
+				Scheduled: &[]flag.ScheduledStep{
+					{
+						Strategy: flag.ScheduledStrategyOverride,
+						Date:     testconvert.Time(time.Now().Add(-2 * time.Hour)),
+						InternalFlag: flag.InternalFlag{
+							Variations: &map[string]*any{
+								"variation_A": testconvert.Interface("value_A"),
+								"variation_B": testconvert.Interface("value_B"),
+							},
+							DefaultRule: &flag.Rule{
+								VariationResult: testconvert.String("variation_B"),
+							},
+						},
+					},
+					{
+						Strategy: flag.ScheduledStrategyReset,
+						Date:     testconvert.Time(time.Now().Add(-1 * time.Hour)),
+						InternalFlag: flag.InternalFlag{},
+					},
+				},
+			},
+			args: args{
+				flagName: "my-flag",
+				user:     ffcontext.NewEvaluationContextBuilder("user-key").Build(),
+				flagContext: flag.Context{
+					DefaultSdkValue: "value_default",
+				},
+			},
+			want: "value_A",
+			want1: flag.ResolutionDetails{
+				Variant: "variation_A",
+				Reason:  flag.ReasonStatic,
+				Metadata: map[string]any{
+					"description": "this is a flag",
+					"issue-link":  "https://issue.link/GOFF-1",
+				},
+			},
+		},
+		{
+			name: "Should restore original rules when strategy is reset",
+			flag: flag.InternalFlag{
+				Variations: &map[string]*any{
+					"variation_A": testconvert.Interface("value_A"),
+					"variation_B": testconvert.Interface("value_B"),
+				},
+				Rules: &[]flag.Rule{
+					{
+						Name:            testconvert.String("rule1"),
+						Query:           testconvert.String("key eq \"user-key\""),
+						VariationResult: testconvert.String("variation_B"),
+					},
+				},
+				DefaultRule: &flag.Rule{
+					VariationResult: testconvert.String("variation_A"),
+				},
+				Metadata: &map[string]any{
+					"description": "this is a flag",
+					"issue-link":  "https://issue.link/GOFF-1",
+				},
+				Scheduled: &[]flag.ScheduledStep{
+					{
+						Strategy: flag.ScheduledStrategyOverride,
+						Date:     testconvert.Time(time.Now().Add(-2 * time.Hour)),
+						InternalFlag: flag.InternalFlag{
+							Variations: &map[string]*any{
+								"variation_A": testconvert.Interface("value_A"),
+								"variation_B": testconvert.Interface("value_B"),
+							},
+							Rules: &[]flag.Rule{},
+							DefaultRule: &flag.Rule{
+								VariationResult: testconvert.String("variation_A"),
+							},
+						},
+					},
+					{
+						Strategy: flag.ScheduledStrategyReset,
+						Date:     testconvert.Time(time.Now().Add(-1 * time.Hour)),
+						InternalFlag: flag.InternalFlag{},
+					},
+				},
+			},
+			args: args{
+				flagName: "my-flag",
+				user:     ffcontext.NewEvaluationContextBuilder("user-key").Build(),
+				flagContext: flag.Context{
+					DefaultSdkValue: "value_default",
+				},
+			},
+			want: "value_B",
+			want1: flag.ResolutionDetails{
+				Variant:   "variation_B",
+				Reason:    flag.ReasonTargetingMatch,
+				RuleIndex: testconvert.Int(0),
+				RuleName:  testconvert.String("rule1"),
+				Metadata: map[string]any{
+					"description":       "this is a flag",
+					"issue-link":        "https://issue.link/GOFF-1",
+					"evaluatedRuleName": "rule1",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
