@@ -202,7 +202,7 @@ func (f *InternalFlag) selectVariation(
 
 // nolint: gocognit
 // applyScheduledRolloutSteps is checking if the flag has a scheduled rollout configured.
-// If yes we merge the changes to the current flag.
+// If yes we merge the changes to the current flag or reset it based on the strategy.
 func (f *InternalFlag) applyScheduledRolloutSteps(evaluationDate time.Time) (*InternalFlag, error) {
 	if f.Scheduled == nil {
 		return f, nil
@@ -223,43 +223,92 @@ func (f *InternalFlag) applyScheduledRolloutSteps(evaluationDate time.Time) (*In
 	for _, steps := range *f.Scheduled {
 		if steps.Date != nil &&
 			(steps.Date.Before(evaluationDate) || steps.Date.Equal(evaluationDate)) {
-			flagCopy.Rules = MergeSetOfRules(f.GetRules(), steps.GetRules())
-			if steps.Disable != nil {
-				flagCopy.Disable = steps.Disable
-			}
-
-			if steps.TrackEvents != nil {
-				flagCopy.TrackEvents = steps.TrackEvents
-			}
-
-			if steps.DefaultRule != nil {
-				flagCopy.DefaultRule.MergeRules(*steps.DefaultRule)
-			}
-
-			if steps.Variations != nil {
-				for key, value := range steps.GetVariations() {
-					flagCopy.GetVariations()[key] = value
-				}
-			}
-
-			if steps.Version != nil {
-				flagCopy.Version = steps.Version
-			}
-
-			if steps.Experimentation != nil {
-				if flagCopy.Experimentation == nil {
-					flagCopy.Experimentation = &ExperimentationRollout{}
-				}
-				if steps.Experimentation.Start != nil {
-					flagCopy.Experimentation.Start = steps.Experimentation.Start
-				}
-				if steps.Experimentation.End != nil {
-					flagCopy.Experimentation.End = steps.Experimentation.End
-				}
+			switch steps.GetStrategy() {
+			case ScheduledStrategyOverride:
+				f.applyScheduledStepOverride(flagCopy, steps)
+			case ScheduledStrategyReset:
+				f.applyScheduledStepReset(flagCopy)
+			case ScheduledStrategyMerge:
+				f.applyScheduledStepMerge(flagCopy, steps)
 			}
 		}
 	}
 	return flagCopy, nil
+}
+
+// applyScheduledStepOverride overrides the flag configuration with the scheduled step configuration.
+func (f *InternalFlag) applyScheduledStepOverride(flagCopy *InternalFlag, steps ScheduledStep) {
+	flagCopy.Variations = coalesce(steps.Variations, flagCopy.Variations)
+	flagCopy.Rules = coalesce(steps.Rules, flagCopy.Rules)
+	flagCopy.BucketingKey = coalesce(steps.BucketingKey, flagCopy.BucketingKey)
+	flagCopy.DefaultRule = coalesce(steps.DefaultRule, flagCopy.DefaultRule)
+	flagCopy.Experimentation = coalesce(steps.Experimentation, flagCopy.Experimentation)
+	flagCopy.Scheduled = f.Scheduled // Always keep scheduled steps
+	flagCopy.TrackEvents = coalesce(steps.TrackEvents, flagCopy.TrackEvents)
+	flagCopy.Disable = coalesce(steps.Disable, flagCopy.Disable)
+	flagCopy.Version = coalesce(steps.Version, flagCopy.Version)
+	flagCopy.Metadata = coalesce(steps.Metadata, flagCopy.Metadata)
+}
+
+// coalesce returns override if non-nil, otherwise fallback.
+func coalesce[T any](override, fallback *T) *T {
+	if override != nil {
+		return override
+	}
+	return fallback
+}
+
+// applyScheduledStepReset resets the flag configuration to its initial state.
+func (f *InternalFlag) applyScheduledStepReset(flagCopy *InternalFlag) {
+	flagCopy.Variations = f.Variations
+	flagCopy.Rules = f.Rules
+	flagCopy.BucketingKey = nil
+	flagCopy.DefaultRule = f.DefaultRule
+	flagCopy.Experimentation = f.Experimentation
+	flagCopy.Scheduled = f.Scheduled
+	flagCopy.TrackEvents = f.TrackEvents
+	flagCopy.Disable = f.Disable
+	flagCopy.Version = f.Version
+	flagCopy.Metadata = f.Metadata
+}
+
+// applyScheduledStepMerge merges the scheduled step configuration with the current flag configuration.
+func (f *InternalFlag) applyScheduledStepMerge(flagCopy *InternalFlag, steps ScheduledStep) {
+	flagCopy.Rules = MergeSetOfRules(f.GetRules(), steps.GetRules())
+	if steps.Disable != nil {
+		flagCopy.Disable = steps.Disable
+	}
+
+	if steps.TrackEvents != nil {
+		flagCopy.TrackEvents = steps.TrackEvents
+	}
+
+	if steps.DefaultRule != nil {
+		flagCopy.DefaultRule.MergeRules(*steps.DefaultRule)
+	}
+
+	if steps.Variations != nil {
+		for key, value := range steps.GetVariations() {
+			flagCopy.GetVariations()[key] = value
+		}
+	}
+
+	if steps.Version != nil {
+		flagCopy.Version = steps.Version
+	}
+
+	if steps.Experimentation != nil {
+		if flagCopy.Experimentation == nil {
+			flagCopy.Experimentation = &ExperimentationRollout{}
+		}
+		if steps.Experimentation.Start != nil {
+			flagCopy.Experimentation.Start = steps.Experimentation.Start
+		}
+		if steps.Experimentation.End != nil {
+			flagCopy.Experimentation.End = steps.Experimentation.End
+		}
+	}
+
 }
 
 // isExperimentationOver checks if we are in an experimentation or not

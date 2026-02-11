@@ -40,6 +40,22 @@ func main() {
 	// Call multiple time the same flag to see the change in time.
 	for true {
 		time.Sleep(1 * time.Second)
-		fmt.Println(ffclient.BoolVariation("new-admin-access", user, false))
+		newAdminAccess, err := ffclient.BoolVariationDetails("new-admin-access", user, false)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("new-admin-access:", newAdminAccess.Value, newAdminAccess.Reason)
+
+		newAdminAccessOverride, err := ffclient.BoolVariationDetails("new-admin-access-override", user, false)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("new-admin-access-override:", newAdminAccessOverride.Value, newAdminAccessOverride.Reason)
+
+		newAdminAccessReset, err := ffclient.BoolVariationDetails("new-admin-access-reset", user, false)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("new-admin-access-reset:", newAdminAccessReset.Value, newAdminAccessReset.Reason)
 	}
 }
